@@ -10,7 +10,7 @@ log = logging.getLogger('elasticutils')
 
 
 @task
-def index_objects(model, ids, **kw):
+def index_objects(model, ids, es=None, **kw):
     """Models can asynchronously update their ES index.
 
     If a model extends SearchMixin, it can add a post_save hook like so::
@@ -24,7 +24,9 @@ def index_objects(model, ids, **kw):
     if getattr(settings, 'ES_DISABLED', False):
         return
 
-    es = get_es()
+    if es is None:
+        es = get_es()
+
     log.debug('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
     qs = model.objects.filter(id__in=ids)
     for item in qs:
@@ -36,9 +38,12 @@ def index_objects(model, ids, **kw):
 
 
 @task
-def unindex_objects(model, ids, **kw):
+def unindex_objects(model, ids, es=None, **kw):
     if getattr(settings, 'ES_DISABLED', False):
         return
+
+    if es is None:
+        es = get_es()
 
     es = get_es()
     for id_ in ids:
